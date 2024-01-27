@@ -1,0 +1,20 @@
+version: "3.0"
+
+services:
+  pm_generator:
+    build:
+      context: .
+    container_name: pm_generator
+    environment:
+      - SAFEBOX=0
+    volumes:
+      - ./presets:/app/presets
+      - ./src:/app/src
+    ports:
+      - 8181:8181
+    restart: 'unless-stopped'
+    networks:
+      - pmg_network
+
+networks:
+  pmg_network:

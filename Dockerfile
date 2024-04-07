@@ -20,7 +20,7 @@ RUN pip install "poetry==$POETRY_VERSION" "urllib3==$URLLIB_VERSION"
 # copy only requirements to cache them in docker layer
 WORKDIR /app
 COPY src/pyproject.toml /app/
-COPY src/poetry.loc[k] /app/
+# COPY src/poetry.loc[k] /app/
 
 # project initialization
 RUN poetry config virtualenvs.create false \

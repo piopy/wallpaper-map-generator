@@ -12,8 +12,8 @@ st.set_page_config(
 st.title("PosterGen")
 
 
-# with open("./presets/minimal_r.json", "r") as f:
-#     dizi = json.loads(f.read())
+with open("./presets/minimal_r.json", "r") as f:
+    dizi = json.loads(f.read())
 #     prettymaps.create_preset("minimal_reversed", **dizi)
 
 

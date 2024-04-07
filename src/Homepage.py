@@ -43,8 +43,8 @@ with st.form("Settings"):
         10000,
         500,
     )
-    quality = st.radio("Qualità", ["standard", "hq"], horizontal=True)
-    quality_ = (12, 12) if quality == "standard" else (50, 50)
+    # quality = st.radio("Qualità", ["standard", "hq"], horizontal=True)
+    quality_ = (12, 12)  # if quality == "standard" else (50, 50)
     circle = False  # st.checkbox("Immagine circolare", False)
 
     # Pulsante "Genera"

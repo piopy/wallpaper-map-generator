@@ -14,13 +14,14 @@ st.title("PosterGen")
 
 with open("./presets/minimal_r.json", "r") as f:
     dizi = json.loads(f.read())
-    prettymaps.create_preset("minimal_reversed", **dizi)
+    # prettymaps.create_preset("minimal_reversed", **dizi)
 
 
 theme_options = [
     p for p in prettymaps.presets().preset.tolist() if "barcelona-plotter" not in p
 ]
 theme_options.append("B/W")
+theme_options.append("minimal_reversed")
 img = io.BytesIO()
 
 
@@ -49,19 +50,21 @@ with st.form("Settings"):
     # Pulsante "Genera"
     if st.form_submit_button("Genera"):
         with st.spinner("Generando l'immagine"):
-            if selected_theme != "B/W":
-                # pmap
+
+            if selected_theme == "minimal_reversed":
                 plot = prettymaps.plot(
                     f"{location_name}, {state_name}",
                     circle=circle,
                     radius=radius,
                     credit=False,
-                    preset=selected_theme,
+                    preset="minimal",
                     constrained_layout=False,
-                    dilate=0,
+                    dilate=None,
                     figsize=quality_,
+                    layers=dizi["layers"],
+                    style=dizi["style"],
                 )
-            else:
+            elif selected_theme == "B/W":
                 # ox puro
                 graph = ox.graph_from_place(
                     f"{location_name}, {state_name}",
@@ -78,6 +81,18 @@ with st.form("Settings"):
                     node_size=0,
                 )
                 fig.set_size_inches(quality_)
+            else:
+                # pmap
+                plot = prettymaps.plot(
+                    f"{location_name}, {state_name}",
+                    circle=circle,
+                    radius=radius,
+                    credit=False,
+                    preset=selected_theme,
+                    constrained_layout=False,
+                    dilate=0,
+                    figsize=quality_,
+                )
 
             st.session_state["keep_plot"] = True
             st.session_state["plot"] = plot.fig if selected_theme != "B/W" else fig

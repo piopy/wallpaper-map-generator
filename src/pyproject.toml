@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "map"
+version = "0.1.0"
+description = ""
+authors = ["Antonio Volgarino <burningham18@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+prettymaps = "^1.0.0"
+streamlit = "^1.29.0"
+
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
+black = "^23.11.0"
+notebook = "6.5.4"
+traitlets = "5.9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -45,7 +45,7 @@ CONFIGURABLE_LAYERS = {
         "default_colors": ["#2196F3"],
         "zorder": 2,
     },
-    "Sea": {
+    "sea": {
         "label": "Mare",
         "default_colors": ["#005DA8", "#2F3737", "#9bc3d4"],
         "zorder": 99,
@@ -159,7 +159,7 @@ img = io.BytesIO()
 st.header("Impostazioni Principali")
 col1, col2 = st.columns(2)
 with col1:
-    location_name = st.text_input("Località:", "Roma")
+    location_name = st.text_input("Località, Provincia:", "Roma, Roma")
     st.selectbox(
         "Seleziona un tema:",
         theme_options,
@@ -206,24 +206,40 @@ with col3:
                         label = "Colore Bordo"
                 st.color_picker(label, value=color, key=f"{key}_color_{i}")
 with col4:
+    st.header("Mappa")
     if st.button(
         "Genera Mappa",
         use_container_width=True,
     ):
         with st.spinner("Generando l'immagine..."):
-            final_layers = {"perimeter": {}}
-            final_style = {
-                "perimeter": {"fill": False, "lw": 0, "zorder": 0},
-                "background": {"fc": st.session_state.bg_color, "zorder": -1},
-            }
+            # Costruzione layers e style come in spunto.py
+            final_layers = {}
+            final_style = {}
 
+            # Layer perimetro e background sempre presenti
+            final_layers["perimeter"] = {}
+            final_style["perimeter"] = {"fill": False, "lw": 0, "zorder": 0}
+            final_style["background"] = {"fc": st.session_state.bg_color, "zorder": -1}
+
+            # Prima imposta tutti i layer configurabili a False
+            for key in CONFIGURABLE_LAYERS.keys():
+                final_layers[key] = False
+
+            # Poi abilita solo quelli attivi
             for key, config in CONFIGURABLE_LAYERS.items():
                 if st.session_state.get(f"{key}_active"):
+                    # Costruzione layer
+                    layer_dict = {}
                     if "tags" in config:
-                        final_layers[key] = {"tags": config["tags"]}
-                    elif "width" in config:
-                        final_layers[key] = {"width": config["width"]}
+                        layer_dict["tags"] = config["tags"]
 
+                    # Per le strade, width va nel layer, non nello style
+                    if key == "streets" and "width" in config:
+                        layer_dict["width"] = config["width"]
+
+                    final_layers[key] = layer_dict
+
+                    # Costruzione style
                     colors = []
                     i = 0
                     while f"{key}_color_{i}" in st.session_state:
@@ -231,41 +247,53 @@ with col4:
                         i += 1
 
                     style_dict = {
-                        "lw": 0.5 if key == "building" else 0,
                         "zorder": config["zorder"],
                     }
 
+                    # Gestione palette/fc/ec come nei preset
                     is_palette = st.session_state.get(f"{key}_is_palette", False)
                     palette_has_ec = st.session_state.get(
                         f"{key}_palette_has_ec", False
                     )
 
                     if is_palette:
-                        if palette_has_ec:
+                        if palette_has_ec and len(colors) > 1:
                             style_dict["palette"] = colors[:-1]
                             style_dict["ec"] = colors[-1]
                         else:
                             style_dict["palette"] = colors
-                            style_dict["ec"] = "#2F3737"
                     elif len(colors) == 1:
                         style_dict["fc"] = colors[0]
                         style_dict["ec"] = colors[0]
                     elif len(colors) == 2:
                         style_dict["fc"] = colors[0]
                         style_dict["ec"] = colors[1]
-                    elif len(colors) > 2:  # Fallback for palettes not from presets
+                    elif len(colors) > 2:
                         style_dict["palette"] = colors
-                        style_dict["ec"] = "#2F3737"
 
-                    if colors:
-                        final_style[key] = style_dict
+                    # NON aggiungere width nello style per le strade
+                    # if "width" in config:
+                    #     style_dict["width"] = config["width"]
 
+                    # Alcuni layer (es. building) hanno lw
+                    if key == "building":
+                        style_dict["lw"] = 0.5
+                    elif key == "streets":
+                        style_dict["lw"] = 0
+
+                    final_style[key] = style_dict
+                else:
+                    # Layer non attivo: non inserirlo in final_layers/final_style
+                    continue
+
+            # Query
             if location_name.startswith("(") and location_name.endswith(")"):
-                query = location_name
+                query = location_name[1:-1]
             else:
                 query = f"{location_name}, {state_name}"
+
             plot = prettymaps.plot(
-                location_name,
+                query,
                 circle=circle,
                 radius=radius,
                 credit=False,
@@ -280,6 +308,13 @@ with col4:
 
     # --- VISUALIZZAZIONE E DOWNLOAD ---
     if st.session_state.get("keep_plot"):
+        if st.download_button(
+            "Scarica l'immagine",
+            data=img,
+            file_name=st.session_state.get("filename", "mappa.png"),
+            use_container_width=True,
+        ):
+            st.success("Immagine scaricata!")
         st.pyplot(st.session_state.plot)
         st.session_state.plot.savefig(
             img,
@@ -288,10 +323,3 @@ with col4:
             bbox_inches="tight",
             pad_inches=0,
         )
-        if st.download_button(
-            "Scarica l'immagine",
-            data=img,
-            file_name=st.session_state.get("filename", "mappa.png"),
-            use_container_width=True,
-        ):
-            st.success("Immagine scaricata!")

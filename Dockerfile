@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # environment
 ENV PYTHONFAULTHANDLER=1 \
@@ -28,7 +28,7 @@ RUN poetry config virtualenvs.create false \
 
 
 COPY src/ /app/src/
-COPY presets/ /app/presets/
+COPY presets/ /app/src/presets/
 
 ENV PYTHONPATH "${PYTHONPATH}:/app/src"
 EXPOSE 8181

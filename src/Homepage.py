@@ -308,6 +308,13 @@ with col4:
 
     # --- VISUALIZZAZIONE E DOWNLOAD ---
     if st.session_state.get("keep_plot"):
+        st.session_state.plot.savefig(
+            img,
+            format="png",
+            dpi=st.session_state.get("dpi", 300),
+            bbox_inches="tight",
+            pad_inches=0,
+        )
         if st.download_button(
             "Scarica l'immagine",
             data=img,
@@ -316,10 +323,3 @@ with col4:
         ):
             st.success("Immagine scaricata!")
         st.pyplot(st.session_state.plot)
-        st.session_state.plot.savefig(
-            img,
-            format="png",
-            dpi=st.session_state.get("dpi", 300),
-            bbox_inches="tight",
-            pad_inches=0,
-        )

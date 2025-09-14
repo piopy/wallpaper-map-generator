@@ -45,11 +45,12 @@ CONFIGURABLE_LAYERS = {
         "default_colors": ["#2196F3"],
         "zorder": 2,
     },
-    "sea": {
-        "label": "Mare",
-        "default_colors": ["#005DA8", "#2F3737", "#9bc3d4"],
-        "zorder": 99,
-    },
+    # "sea": {
+    #     "label": "Mare",
+    #     "tags": {"natural": ["sea", "ocean"]},
+    #     "default_colors": ["#005DA8", "#2F3737", "#9bc3d4"],
+    #     "zorder": 99,
+    # },
     "pedestrian": {
         "label": "Aree pedonali",
         "tags": {"area:highway": "pedestrian"},
@@ -211,7 +212,7 @@ with col4:
         "Genera Mappa",
         use_container_width=True,
     ):
-        with st.spinner("Generando l'immagine..."):
+        with st.spinner("Setting up parameters..."):
             # Costruzione layers e style come in spunto.py
             final_layers = {}
             final_style = {}
@@ -230,6 +231,8 @@ with col4:
                 if st.session_state.get(f"{key}_active"):
                     # Costruzione layer
                     layer_dict = {}
+
+                    # Solo aggiungere tags se esistono nel config
                     if "tags" in config:
                         layer_dict["tags"] = config["tags"]
 
@@ -237,7 +240,13 @@ with col4:
                     if key == "streets" and "width" in config:
                         layer_dict["width"] = config["width"]
 
-                    final_layers[key] = layer_dict
+                    # Layer speciali che non hanno tags ma sono supportati da prettymaps
+                    if key in ["sea", "streets"] and not layer_dict:
+                        # Per questi layer, passa True per abilitarli
+                        final_layers[key] = {}
+                    else:
+                        # Per tutti gli altri layer, usa la configurazione normale
+                        final_layers[key] = layer_dict if layer_dict else {}
 
                     # Costruzione style
                     colors = []
@@ -292,6 +301,7 @@ with col4:
             else:
                 query = f"{location_name}, {state_name}"
 
+        with st.spinner(f"Generating map..."):
             plot = prettymaps.plot(
                 query,
                 circle=circle,
@@ -307,17 +317,27 @@ with col4:
             st.session_state.filename = f"{location_name.replace(' ', '_')}_{st.session_state.selected_theme}.png"
 
     # --- VISUALIZZAZIONE E DOWNLOAD ---
+    from enhancer import upscale_image_bytes
+
     if st.session_state.get("keep_plot"):
-        st.session_state.plot.savefig(
-            img,
-            format="png",
-            dpi=st.session_state.get("dpi", 300),
-            bbox_inches="tight",
-            pad_inches=0,
-        )
+        with st.spinner("Saving plot to BytesIO..."):
+            st.session_state.plot.savefig(
+                img,
+                format="png",
+                dpi=st.session_state.get("dpi", 300),
+                bbox_inches="tight",
+                pad_inches=0,
+            )
+        with st.spinner("Upscaling image..."):
+            output_bytes = upscale_image_bytes(
+                img,
+                scale_factor=2.0,
+                enhance_sharpness=True,
+                output_format="PNG",
+            )
         if st.download_button(
             "Scarica l'immagine",
-            data=img,
+            data=output_bytes,
             file_name=st.session_state.get("filename", "mappa.png"),
             use_container_width=True,
         ):
